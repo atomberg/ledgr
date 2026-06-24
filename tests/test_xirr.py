@@ -45,6 +45,16 @@ def test_flows_out_of_order_are_sorted_internally():
     assert xirr(flows) == pytest.approx(expected, abs=1e-6)
 
 
+def test_non_convergence_raises_explicit_error_not_unguarded_result():
+    # max_iter=0 forces the root-finder to exhaust its iteration budget before
+    # any refinement step runs, deterministically exercising the convergence-
+    # failure branch (xirr.py's final `raise XIRRError(...)` after the loop)
+    # without relying on a pathological cash-flow series to fail to converge.
+    flows = [(dt.date(2023, 1, 1), -1000.0), (dt.date(2024, 1, 1), 1100.0)]
+    with pytest.raises(XIRRError, match="did not converge"):
+        xirr(flows, max_iter=0)
+
+
 def test_short_holding_period_large_gain_is_computed_not_rejected():
     # A position bought 14 days ago, up 22.6%. Annualized this is a legitimate but
     # extreme rate (~20000%) that lands between the old hi=100.0 ceiling and the

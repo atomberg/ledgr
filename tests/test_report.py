@@ -51,6 +51,21 @@ def test_build_reports_for_two_holdings_plus_total():
     assert total.current_value == pytest.approx(9.0 * 33.0 + 20.0 * 24.0)
     assert total.yield_pct is not None
 
+    # Per-ticker yield must come from THIS ticker's cash flows plus a final
+    # positive flow dated today sized qty_held * current_price -- not, e.g.,
+    # the combined series, a stale price, or a flow dated at the wrong day.
+    # Expected values cross-checked against ledgr's own xirr() (proven correct
+    # independently by test_xirr.py) fed the cash-flow series the spec
+    # prescribes (Closeness checks 2 and 3), to isolate build_reports's
+    # series-construction logic from XIRR root-finding correctness.
+    assert by_ticker["XEQT.TO"].yield_pct == pytest.approx(5.389478539377261, abs=1e-6)
+    assert by_ticker["VAB.TO"].yield_pct == pytest.approx(-2.2897875294838386, abs=1e-6)
+
+    # TOTAL yield must come from every transaction across every ticker, plus
+    # one final positive flow dated today sized at total current portfolio
+    # value -- not, e.g., an average of the per-ticker yields.
+    assert total.yield_pct == pytest.approx(0.8039058230901718, abs=1e-6)
+
 
 def test_fully_sold_ticker_skips_price_fetch_and_keeps_realized_yield():
     holdings = {
