@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from ledgr!")
+from ledgr.cli import main
+
+__all__ = ["main"]
